@@ -28,7 +28,7 @@ while P_out[-1]<500 : #on s'arrete à MP a 500bars
     masse_out.append(masse_out[-1]+debit_massique*dt)
     masse_volumique_out.append(masse_out[-1]/V_out)
     P_out.append((cp.PropsSI('P', 'T', T, 'Dmass', masse_volumique_out[-1], 'H2'))/101300)
-    Pression.append(P/101300)
+    Pression.append(P/100000)
     Temps.append(Temps[-1]+dt)
 print(Temps[-1])
 print((X[0]-X[-1])*V)
@@ -53,7 +53,10 @@ plt.xlabel('temps (en secondes)')
 plt.ylabel(" pression d'H2 dans la cascade (en bar)")
 plt.show()
 
-
+plt.plot(Temps,masse_out)
+plt.xlabel('temps')
+plt.ylabel(" Masse d'H2 dans la cascade")
+plt.show()
 
 
 
