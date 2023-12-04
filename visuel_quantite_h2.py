@@ -31,7 +31,7 @@ nb_passages_trains=  0     #par an
 
 reservoirs_bus =  35    #en kg
 reservoir_train =  215    #en kg
-V_bus =
+V_bus = 0
 #le compresseur ne fontionne que pour les middle pressure storages
 #Je vais donc faire à la main pour les low pressure storage
 
@@ -56,7 +56,7 @@ def remplissage_LP(T, l_m_LP, l_m_stock, v_in, V_LP):
         for n in range (len(l_m_stock)):   #on parcourt les stocks livrés
             kp = 0.035  #pas important on considérera le chargement inférieur à 15 min
             pressure = cp.PropsSI('P' ,'T', T,'Dmass', l_m_stock[n]/v_in, 'H2')
-            while l_m_LP[i]< 50 and l_m_stock[n] > 60 and pressure - cp.PropsSI('P' ,'T', T,'Dmass', l_m_LP[i]/V_LP, 'H2')) > 0:
+            while l_m_LP[i]< 50 and l_m_stock[n] > 60 and (pressure - cp.PropsSI('P' ,'T', T,'Dmass', l_m_LP[i]/V_LP, 'H2')) > 0:
                 rho = cp.PropsSI('Dmass' ,'T', T, 'P', pressure, 'H2')  
                 dm = dt*rho*m.sqrt((cp.PropsSI('P' ,'T', T,'Dmass', l_m_stock[n]/v_in, 'H2') - cp.PropsSI('P' ,'T', T,'Dmass', l_m_LP[i]/V_LP, 'H2'))*2/kp*rho) #formule du débit mais ne fonctionne pas bien
                 l_m_LP[i] += dm
@@ -65,6 +65,12 @@ def remplissage_LP(T, l_m_LP, l_m_stock, v_in, V_LP):
                 
 
     return (l_m_stock,l_m_LP)
+
+
+Minit_LP1 = cp.PropsSI('Dmass' ,'T', T,'P', 50e5, 'H2') * V_LP
+l_m_LP = [Minit_LP1]*4
+
+
 
 t=np.linspace(4*24, 4*24)    #on découpe la journée en quarts d'heure
 stock_tab = np.zeros(4*24, 3)   #tableau des données dans les stockages en f(t)
@@ -75,7 +81,8 @@ MP_tab = np.zeros(4*24, 4) #idem pour MP
 MP_tab[0] = l_m_MP
 for i in range (1, len(t)):
     if t % 8 == 7:
-        l_m_stock,l_m_LP, l_m_MP = remplissage_bus(T, l_m_LP, l_m_MP, V_bus, v_in, V_LP, V_MP, reservoirs_bus)
+        pass
+        #l_m_stock,l_m_LP, l_m_MP = remplissage_bus(T, l_m_LP, l_m_MP, V_bus, v_in, V_LP, V_MP, reservoirs_bus)
     else:
         l_m_stock,l_m_LP = remplissage_LP(T, l_m_LP, l_m_stock, v_in, V_LP)
         l_m_stock, l_m_MP = l_m_stock - f(l_m_stock, 15*3600), l_m_MP + f(l_m_stock, 15*3600)
@@ -85,8 +92,7 @@ for i in range (1, len(t)):
 
 #l_m_stock,l_m_LP = remplissage_LP(T, l_m_LP, l_m_stock, v_in, V_LP)
 
-Minit_LP1 = cp.PropsSI('Dmass' ,'T', T,'P', 50e5, 'H2') * V_LP
-l_m_LP = [Minit_LP1]*4
+
 
 print(l_m_LP)
 
