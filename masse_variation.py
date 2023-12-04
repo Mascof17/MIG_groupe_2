@@ -17,7 +17,7 @@ import CoolProp.CoolProp as cp
 import matplotlib.pyplot as plt
 
 def f(poids_stockage, temps,debit_normo =300/3600,volume_stockage = 14.8,T = 293):
-    Pression_stockage = cp.PropsSI('P', 'T', T, 'Dmass',poids_stockage/volume_stockage , 'H2')
+    Pression_stockage = cp.PropsSI('P', 'T', T, 'Dmass',poids_stockage/volume_stockage , 'H2')/100000
     Temps = [0]
     masse_stockage =[poids_stockage]
     while Temps[-1]<temps : #le procesus dure pendant temps secondes
@@ -28,6 +28,10 @@ def f(poids_stockage, temps,debit_normo =300/3600,volume_stockage = 14.8,T = 293
         Temps.append(Temps[-1]+dt)
     return masse_stockage[0]-masse_stockage[-1]
 
+
+
 # -
+
+f(30,30)
 
 
