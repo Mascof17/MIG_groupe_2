@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import CoolProp.CoolProp as cp
 import numpy as np
 import math as m
-import comprsseur as cp
+from masse_variation import f
 
 
 T=293  #K
@@ -78,7 +78,7 @@ for i in range (1, len(t)):
         l_m_stock,l_m_LP, l_m_MP = remplissage_bus(T, l_m_LP, l_m_MP, V_bus, v_in, V_LP, V_MP, reservoirs_bus)
     else:
         l_m_stock,l_m_LP = remplissage_LP(T, l_m_LP, l_m_stock, v_in, V_LP)
-        l_m_stock, l_m_MP = remplissage_MP_15min(T, l_m_MP, l_m_stock, v_in, V_LP)
+        l_m_stock, l_m_MP = l_m_stock - f(l_m_stock, 15*3600), l_m_MP + f(l_m_stock, 15*3600)
     LP_tab[i] = l_m_LP
     MP_tab[i] = l_m_MP
     stock_tab[i] = l_m_stock
@@ -93,7 +93,7 @@ print(l_m_LP)
 print (f"l_m_stock={remplissage_LP(T, l_m_LP, l_m_stock, v_in, V_LP)[0]} et l_m_LP={remplissage_LP(T, l_m_LP, l_m_stock, v_in, V_LP)[1]}") #attention le débit est bcp trop important
 
 
-
+print (f"pour la f de louis:{f(l_m_LP[0], 15*60)} ")
 
 
 
