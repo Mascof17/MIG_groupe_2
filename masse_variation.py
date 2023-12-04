@@ -17,9 +17,10 @@ import CoolProp.CoolProp as cp
 import matplotlib.pyplot as plt
 
 def f(poids_stockage, temps,debit_normo =300/3600,volume_stockage = 14.8,T = 293):
-    Pression_stockage = cp.PropsSI('P', 'T', T, 'Dmass',poids_stockage/volume_stockage , 'H2')/100000
+    Pression_stockage = [cp.PropsSI('P', 'T', T, 'Dmass',poids_stockage/volume_stockage , 'H2')/100000]
     Temps = [0]
     masse_stockage =[poids_stockage]
+    dt =0.1
     while Temps[-1]<temps : #le procesus dure pendant temps secondes
         debit_volumique = (debit_normo*1.01325*(T+273))/(Pression_stockage[-1]*273) #source pour la formule https://www.detendeur.fr/m3h.normo.m3h.p.html
         debit_massique = masse_stockage[-1]*debit_volumique/volume_stockage
@@ -32,6 +33,6 @@ def f(poids_stockage, temps,debit_normo =300/3600,volume_stockage = 14.8,T = 293
 
 # -
 
-f(30,30)
+f(60,3600)
 
 
