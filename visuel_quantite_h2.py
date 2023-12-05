@@ -50,15 +50,12 @@ def kg_a_la_fin(T, l_m_stock, l_m_LP, v_in, V_LP):
 
 
 def remplissage_LP(T, l_m_LP, l_m_stock, v_in, V_LP):
-    dt = 0.00000003
     t = 0
     sum_P=0
     for i in range (len(l_m_LP)):  #on parcourt le stck LP
         for n in range (len(l_m_stock)):   #on parcourt les stocks livrés
-            kp = 0.035  #pas important on considérera le chargement inférieur à 15 min
             pressure = cp.PropsSI('P' ,'T', T,'Dmass', l_m_stock[n]/v_in, 'H2')
-            while l_m_LP[i]< 50 and l_m_stock[n] > 60 and (pressure - cp.PropsSI('P' ,'T', T,'Dmass', l_m_LP[i]/V_LP, 'H2')) > 0:
-                rho = cp.PropsSI('Dmass' ,'T', T, 'P', pressure, 'H2')  
+            while l_m_LP[i]< 50 and l_m_stock[n] > 60 and (pressure - cp.PropsSI('P' ,'T', T,'Dmass', l_m_LP[i]/V_LP, 'H2')) > 0:  
                 dm = 0.004
                 l_m_LP[i] += dm
                 l_m_stock[n] -= dm
@@ -79,7 +76,7 @@ def remplissage_MP(l_m_stock, l_m_MP, debit_normo =300/3600,volume_stockage = 14
     for i in range (len(l_m_MP)):  #on parcourt le stck LP
         for n in range (len(l_m_stock)): #le procesus dure pendant temps secondes
             #source pour la formule https://www.detendeur.fr/m3h.normo.m3h.p.html
-            while l_m_LP[i]< 50 and l_m_stock[n] > 60:
+            while l_m_MP[i]< 50 and l_m_stock[n] > 60:
                 debit_massique = debit_normo*cp.PropsSI('Dmass', 'T', T, 'P', Pression_stockage[n],'H2')
                 if Temps[-1] < 15*60:
                     l_m_stock[n] -= debit_massique*dt  # derivee de la masse vaut -debit, m[i+1]=m[i]-debit*dt
@@ -95,7 +92,7 @@ def remplissage_MP(l_m_stock, l_m_MP, debit_normo =300/3600,volume_stockage = 14
 
 
 ##### ICI IL FAUT RENTRER LES CONDITIONS INITIALES
-Minit_LP1 = cp.PropsSI('Dmass' ,'T', T,'P', 50e5, 'H2') * V_LP
+Minit_LP1 = cp.PropsSI('Dmass' ,'T', T,'P', 300e5, 'H2') * V_LP
 l_m_LP = [Minit_LP1]*4
 
 
@@ -119,7 +116,7 @@ for i in range (1, len(t)):
 
 
 
-
+t=t/4 #on remet en heures
 #Création des subplots pour visualiser la quantité
 fig, axs = plt.subplots(2, 4, figsize=(12, 6))
 print(len(t),len(stock_tab))
@@ -140,16 +137,16 @@ axs[0, 3].plot(t, LP_tab[:, 0])
 axs[0, 3].set_title('LP1')
 
 # Sous-plot 5
-axs[1, 0].plot(t, LP_tab[:, 1])
-axs[1, 0].set_title('LP2')
+axs[1, 0].plot(t, LP_tab[:, 3])
+axs[1, 0].set_title('LP4')
 
 # Sous-plot 6
-axs[1, 1].plot(t, LP_tab[:, 2])
-axs[1, 1].set_title('LP3')
+axs[1, 1].plot(t, MP_tab[:, 0])
+axs[1, 1].set_title('MP1')
 
 # Sous-plot 7
-axs[1, 2].plot(t, LP_tab[:, 3])
-axs[1, 2].set_title('LP4')
+axs[1, 2].plot(t, MP_tab[:, 3])
+axs[1, 2].set_title('MP4')
 
 # Supprimer le huitième sous-plot (il n'y a pas assez de sous-plots pour 2x4)
 fig.delaxes(axs[1, 3])
