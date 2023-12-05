@@ -47,8 +47,6 @@ def kg_a_la_fin(T, l_m_stock, l_m_LP, v_in, V_LP):
 #étudions désormais une fonction qui suit la quantité d'hydrogène dans le LP tank
 
 
-
-
 def remplissage_LP(T, l_m_LP, l_m_stock, v_in, V_LP):
     t = 0
     sum_P=0
@@ -67,7 +65,6 @@ def remplissage_LP(T, l_m_LP, l_m_stock, v_in, V_LP):
 
 
 
-
 def remplissage_MP(l_m_stock, l_m_MP, debit_normo =300/3600,volume_stockage = 14.8,T = 293):
     Pression_stockage = [cp.PropsSI('P', 'T', T, 'Dmass',l_m_stock[i]/volume_stockage , 'H2') for i in range (len(l_m_stock))]
     Temps = [0]
@@ -76,7 +73,7 @@ def remplissage_MP(l_m_stock, l_m_MP, debit_normo =300/3600,volume_stockage = 14
     for i in range (len(l_m_MP)):  #on parcourt le stck LP
         for n in range (len(l_m_stock)): #le procesus dure pendant temps secondes
             #source pour la formule https://www.detendeur.fr/m3h.normo.m3h.p.html
-            while l_m_MP[i]< 50 and l_m_stock[n] > 60:
+            while l_m_MP[i] < 50 and l_m_stock[n] > 60 :
                 debit_massique = debit_normo*cp.PropsSI('Dmass', 'T', T, 'P', Pression_stockage[n],'H2')
                 if Temps[-1] < 15*60:
                     l_m_stock[n] -= debit_massique*dt  # derivee de la masse vaut -debit, m[i+1]=m[i]-debit*dt
@@ -85,8 +82,6 @@ def remplissage_MP(l_m_stock, l_m_MP, debit_normo =300/3600,volume_stockage = 14
                     Temps.append(Temps[-1]+dt)
 
     return l_m_stock, l_m_MP
-
-
 
 
 
@@ -105,11 +100,12 @@ MP_tab = np.zeros((4*24, 4)) #idem pour MP
 MP_tab[0] = l_m_MP
 
 for i in range (1, len(t)):
-    if t[i] % 8 == 7:   #####Le truc de TAHA
-        l_m_LP, l_m_MP = [l_m_LP[i]-5 for i in range(len(l_m_LP))],  [l_m_MP[i]-3 for i in range(len(l_m_MP))] #remplissage_bus(T, l_m_LP, l_m_MP, V_bus, v_in, V_LP, V_MP, reservoirs_bus)
-    elif t[i] % 14 == 0 or t[i] == 0:
-        l_m_stock,l_m_LP = remplissage_LP(T, l_m_LP, l_m_stock, v_in, V_LP)
-        l_m_stock, l_m_MP = remplissage_MP(l_m_stock, l_m_MP)
+    if t[i] >= 20 and t[i] <= 84:
+        if t[i] % 8 == 7:   #####Le truc de TAHA
+            l_m_LP, l_m_MP = [l_m_LP[i]-5 for i in range(len(l_m_LP))],  [l_m_MP[i]-3 for i in range(len(l_m_MP))] #remplissage_bus(T, l_m_LP, l_m_MP, V_bus, v_in, V_LP, V_MP, reservoirs_bus)
+        elif t[i] % 20 == 0 or t[i] == 0:
+            l_m_stock,l_m_LP = remplissage_LP(T, l_m_LP, l_m_stock, v_in, V_LP)
+            l_m_stock, l_m_MP = remplissage_MP(l_m_stock, l_m_MP)
     LP_tab[i] = l_m_LP
     MP_tab[i] = l_m_MP
     stock_tab[i] = l_m_stock
