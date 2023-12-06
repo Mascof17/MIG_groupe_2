@@ -16,6 +16,7 @@ def redvalve(p_i, p_o, T_in, kp, rho_o): # calcule le débit massique à partir 
     mdot = (vdot/3600)*rho_o
     return mdot
 
+nb_reservoirs = 5 #nombre de réservoirs à charger successivement
 t=0
 dt = 0.1
 aprr = 5
@@ -23,13 +24,13 @@ T_ambient = 25 + 273.15
 p_fcv_ini = 20e5
 T_ini = T_ambient
 V_fcv = 0.35 #350litres par réservoir
-nb_reservoirs = 5 #nombre de réservoirs à charger successivement
 kp_valve = 0.035
 cascade = [[300e5,50,2.435], [300e5,50,2.435], [300e5,50,2.435], [300e5,50,2.435],
            [450e5,50,1.758], [450e5,50,1.758], [450e5,50,1.758], [450e5,50,1.758]]
 time_array = np.array([])
 mdot_array = np.array([])
 pin_array = np.array([]) #pression in (à la sortie des tanks du cascade storage)
+cooling_array = np.array([]) #puissance de refroidissement du H2
 cascade_track = [ [ np.array([]), np.array([]), np.array([]) ] ] #tracking des paramètres du cascade storage en décharge
 fcv_track =  [ ] #tracking des paramètres des réservoirs du fcv en recharge
 
@@ -64,6 +65,7 @@ for reservoir in range(nb_reservoirs)  :
         dm_dt = min(redvalve(p_aprr, p_fcv, T_i, kp_valve, rho_fcv), redvalve(p_tank, p_aprr, T_tank, kp_valve, rho_m))
         hin = cp.PropsSI('H', 'P', p_aprr, 'T', T_i, 'H2')
         p_tank = cp.PropsSI('P', 'U', u_tank, 'Dmass', rho_tank, 'H2')
+        cooling = dm_dt*(h_tank-hin)/0.9
         du_dt_fcv = dm_dt*(hin-u_fcv)/m_fcv
         du_dt_tank = dm_dt*(u_tank-h_tank)/m_tank
         T_fcv = cp.PropsSI('T', 'U', u_fcv, 'Dmass', rho_fcv, 'H2')
@@ -75,6 +77,7 @@ for reservoir in range(nb_reservoirs)  :
         fcv_track[reservoir][4] = np.append(dm_dt, fcv_track[reservoir][4]) # débit H2 dans le fcv
         mdot_array = np.append(dm_dt, mdot_array)
         pin_array = np.append(p_tank, pin_array)
+        cooling_array = np.append(cooling, cooling_array)
         cascade_track[stage][0] = np.append(p_tank, cascade_track[stage][0])
         cascade_track[stage][1] = np.append(m_tank, cascade_track[stage][1])
         cascade_track[stage][2] = np.append(T_tank, cascade_track[stage][2])
@@ -97,6 +100,16 @@ for reservoir in range(nb_reservoirs)  :
     cascade[stage] = [p_tank, m_tank, cascade[stage][2]]
 
 #fontions pour visualiser
+def p_in_plot():
+    plt.plot(time_array/60, pin_array/1e5)
+    plt.xlabel('Temps ($minutes$)')
+    plt.ylabel('Pression IN ($Bar$)')
+
+def cooling_plot():
+    plt.plot(time_array/60, cooling_array/1e3)
+    plt.xlabel('Temps ($minutes$)')
+    plt.ylabel('Puissance de refroidissement ($kiloWatts$)')
+
 def T_fcv_plot(reservoir):
     n = len( fcv_track[reservoir-1][2] )
     l_t=np.linspace( fcv_track[reservoir-1][0], fcv_track[reservoir][0], num = int(n) )
@@ -125,8 +138,3 @@ def m_tank_plot(tank):
 
 def T_tank_plot(tank):
     plt.plot(cascade_track[tank-1][2][::-1])
-# -
-
-
-
-
