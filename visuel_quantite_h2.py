@@ -46,56 +46,57 @@ V_bus = 0
 #étudions désormais une fonction qui suit la quantité d'hydrogène dans le LP tank 
 
     #on fait donc des programmes de modélisation de la recharge
-def remplissage_LP(l_m_stock, l_m_LP, debit_normo =300/3600,volume_stockage = 14.8,T = 293):
+def remplissage_LP(l_m_stock, l_m_LP, debit_normo =500/3600,volume_stockage = 14.8,T = 293):
     Pression_stockage = [cp.PropsSI('P', 'T', T, 'Dmass',l_m_stock[i]/volume_stockage , 'H2') for i in range (len(l_m_stock))]
     Temps = [0]
     dt =0.1
     debit_massique = debit_normo*cp.PropsSI('Dmass', 'T', T, 'P', Pression_stockage[-1],'H2')
     print (debit_massique)
-    for i in range (len(l_m_LP)):  #on parcourt le stck LP
+    for i in range (len(l_m_LP)):  #on parcourt le stock LowPressure
 
         for n in range (len(l_m_stock)): #on parcourt le stock
             pressure = cp.PropsSI('P' ,'T', T,'Dmass', l_m_stock[n]/v_in, 'H2')
                 #si on a une delta P favorable, on fait un remplissage naturel
 
             if pressure - cp.PropsSI('P' ,'T', T,'Dmass', l_m_LP[i]/V_LP, 'H2') > 0:   
-                while l_m_LP[i]< 50 and l_m_stock[n] > 60 and (pressure - cp.PropsSI('P' ,'T', T,'Dmass', l_m_LP[i]/V_LP, 'H2')) > 0:  
-                    dm = 0.004
-                    l_m_LP[i] += dm
-                    l_m_stock[n] -= dm
+                Dmass= (l_m_LP[i] + l_m_stock[n])/(V_LP + v_in)
+                l_m_LP[i], l_m_stock[n] = V_LP*cp.PropsSI('Dmass' ,'T', T,'P', cp.PropsSI('P' ,'T', T,'Dmass', Dmass, 'H2'), 'H2'), v_in*cp.PropsSI('Dmass' ,'T', T,'P', cp.PropsSI('P' ,'T', T,'Dmass',Dmass, 'H2'), 'H2')
+                
+
                 #sinon on fait avec le compresseur
             else:
-                while l_m_LP[i] < 50 and l_m_stock[n] > 60 :
+                debit_massique = debit_normo*cp.PropsSI('Dmass', 'T', T, 'P', Pression_stockage[n],'H2') #on a définit son débit normométrique
+                while l_m_MP[i] < 50 and l_m_stock[n] > 60 and Temps[-1] < 120*60: 
                     debit_massique = debit_normo*cp.PropsSI('Dmass', 'T', T, 'P', Pression_stockage[n],'H2')
-                    if Temps[-1] < 15*60:
-                        l_m_stock[n] -= debit_massique*dt  # derivee de la masse vaut -debit, m[i+1]=m[i]-debit*dt
-                        l_m_LP[i] += debit_massique*dt
-                        Pression_stockage.append(cp.PropsSI('P', 'T', T, 'Dmass', l_m_stock[n]/volume_stockage, 'H2'))
-                        Temps.append(Temps[-1]+dt)
-
-    return l_m_stock, l_m_MP
-
-
-
-
-def remplissage_MP(l_m_stock, l_m_MP, debit_normo =300/3600,volume_stockage = 14.8,T = 293):
-    Pression_stockage = [cp.PropsSI('P', 'T', T, 'Dmass',l_m_stock[i]/volume_stockage , 'H2') for i in range (len(l_m_stock))]
-    Temps = [0]
-    dt =0.1
-    debit_massique = debit_normo*cp.PropsSI('Dmass', 'T', T, 'P', Pression_stockage[-1],'H2')
-    for i in range (len(l_m_MP)):  #on parcourt le stck LP
-
-        for n in range (len(l_m_stock)): #le procesus dure pendant temps secondes
-            while l_m_MP[i] < 50 and l_m_stock[n] > 60 :
-                debit_massique = debit_normo*cp.PropsSI('Dmass', 'T', T, 'P', Pression_stockage[n],'H2')
-                if Temps[-1] < 15*60:  #on se limite au pas de temps de 15min
+                    print(debit_massique) 
                     l_m_stock[n] -= debit_massique*dt  # derivee de la masse vaut -debit, m[i+1]=m[i]-debit*dt
                     l_m_MP[i] += debit_massique*dt
-                    Pression_stockage.append(cp.PropsSI('P', 'T', T, 'Dmass', l_m_stock[n]/volume_stockage, 'H2'))
+                    Pression_stockage[n] = (cp.PropsSI('P', 'T', T, 'Dmass', l_m_stock[n]/volume_stockage, 'H2'))
                     Temps.append(Temps[-1]+dt)
 
     return l_m_stock, l_m_MP
 
+
+
+
+def remplissage_MP(l_m_stock, l_m_MP, debit_normo =500/3600,volume_stockage = 14.8,T = 293):   #on définit ce débit à partir de ceux présents dans le commerce https://www.atlascopco.com/fr-fr/compressors/products/gas-compressors/h2y-high-pressure-hydrogen-compressor
+    Pression_stockage = [cp.PropsSI('P', 'T', T, 'Dmass',l_m_stock[i]/volume_stockage , 'H2') for i in range (len(l_m_stock))]
+    Temps = [0]   #on veut se limiter à 1/4 d'heure, mais c'est inutile
+    dt =0.1
+    debit_massique = debit_normo*cp.PropsSI('Dmass', 'T', T, 'P', 1013e2,'H2') #par définition du normomètre cube
+    for i in range (len(l_m_MP)):  #on parcourt le stck LP
+
+        for n in range (len(l_m_stock)): #le procesus dure pendant temps secondes
+            while l_m_MP[i] < 50 and l_m_stock[n] > 60 and Temps[-1] < 120*60:
+                debit_massique = debit_normo*cp.PropsSI('Dmass', 'T', T, 'P', Pression_stockage[n],'H2')
+                print(debit_massique)
+                  #on se limite au pas de temps de 15min
+                l_m_stock[n] -= debit_massique*dt  # derivee de la masse vaut -debit, m[i+1]=m[i]-debit*dt
+                l_m_MP[i] += debit_massique*dt
+                Pression_stockage[n] = (cp.PropsSI('P', 'T', T, 'Dmass', l_m_stock[n]/volume_stockage, 'H2'))
+                Temps.append(Temps[-1]+dt)
+
+    return l_m_stock, l_m_MP
 
 
 
@@ -116,7 +117,7 @@ for i in range (1, len(t)):
     if t[i] >= 20 and t[i] <= 84:
         if t[i] % 8 == 7:   #####Le truc de TAHA
             l_m_LP, l_m_MP = [l_m_LP[i]-5 for i in range(len(l_m_LP))],  [l_m_MP[i]-3 for i in range(len(l_m_MP))] #remplissage_bus(T, l_m_LP, l_m_MP, V_bus, v_in, V_LP, V_MP, reservoirs_bus)
-        elif t[i] % 20 == 0 or t[i] == 0:
+        elif t[i] % 15 == 0 or t[i] == 0:
             l_m_stock,l_m_LP = remplissage_LP(l_m_stock, l_m_LP)
             l_m_stock, l_m_MP = remplissage_MP(l_m_stock, l_m_MP)
     LP_tab[i] = l_m_LP
@@ -165,3 +166,5 @@ plt.tight_layout()
 
 # Afficher le graphique
 plt.show()
+
+print(cp.PropsSI('Dmass', 'T', T, 'P', 1e5,'H2'))
