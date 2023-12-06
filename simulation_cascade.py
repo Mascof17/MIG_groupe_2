@@ -68,10 +68,10 @@ for reservoir in range(nb_reservoirs)  :
         T_fcv = cp.PropsSI('T', 'U', u_fcv, 'Dmass', rho_fcv, 'H2')
         T_tank = cp.PropsSI('T', 'U', u_tank, 'Dmass', rho_tank, 'H2')
         time_array = np.append(t, time_array) 
-        fcv_track[reservoir][1] = np.append(m_fcv, fcv_track[reservoir][1]) # masse H2 dans le fcv
-        fcv_track[reservoir][2] = np.append(T_fcv, fcv_track[reservoir][2]) # température H2 dans le fcv
-        fcv_track[reservoir][3] = np.append(T_fcv, fcv_track[reservoir][3]) # pression H2 dans le fcv
-        fcv_track[reservoir][4] = np.append(dm_dt, fcv_track[reservoir][4]) # débit H2 dans le fcv
+        fcv_track[reservoir][0] = np.append(m_fcv, fcv_track[reservoir][0]) # masse H2 dans le fcv
+        fcv_track[reservoir][1] = np.append(T_fcv, fcv_track[reservoir][1]) # température H2 dans le fcv
+        fcv_track[reservoir][2] = np.append(T_fcv, fcv_track[reservoir][2]) # pression H2 dans le fcv
+        fcv_track[reservoir][3] = np.append(dm_dt, fcv_track[reservoir][3]) # débit H2 dans le fcv
         mdot_array = np.append(dm_dt, mdot_array)
         rho_array = np.append(rho_fcv, rho_array)
         pin_array = np.append(p_tank, pin_array)
