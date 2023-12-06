@@ -34,6 +34,7 @@ cascade = [(300e5,50,2.4), (300e5,50,2.4), (300e5,50,2.4), (300e5,50,2.4), (500e
 
 time_array = np.array([])
 mdot_array = np.array([])
+rho_array = np.array([])
 m_fcv_array = np.array([])
 T_fcv_array = np.array([])
 pin_array = np.array([])
@@ -75,6 +76,7 @@ while p_fcv<350e5:
     time_array = np.append(t, time_array)
     m_fcv_array = np.append(m_fcv, m_fcv_array)
     mdot_array = np.append(dm_dt, mdot_array)
+    rho_array = np.append(rho_fcv, rho_array)
     T_fcv_array = np.append(T_fcv, T_fcv_array)
     pin_array = np.append(p_tank, pin_array)
     cascade_track[stage][0] = np.append(p_tank, cascade_track[stage][0])
