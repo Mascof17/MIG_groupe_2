@@ -84,6 +84,10 @@ while p_fcv<350e5:
     cascade_track[stage][2] = np.append(T_tank, cascade_track[stage][0])
     t += dt
 
+
 # -
+plt.plot(time_array, mdot_array)
+
+
 
 
