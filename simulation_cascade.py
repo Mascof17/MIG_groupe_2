@@ -28,6 +28,7 @@ kp_valve = 0.035
 cascade = [[300e5,50,2.435], [300e5,50,2.435], [300e5,50,2.435], [300e5,50,2.435],
            [450e5,50,1.758], [450e5,50,1.758], [450e5,50,1.758], [450e5,50,1.758]]
 time_array = np.array([])
+mdot_array = np.array([])
 pin_array = np.array([]) #pression in (à la sortie des tanks du cascade storage)
 cascade_track = [ [ np.array([]), np.array([]), np.array([]) ] ] #tracking des paramètres du cascade storage en décharge
 fcv_track =  [ ] #tracking des paramètres des réservoirs du fcv en recharge
@@ -73,9 +74,7 @@ for reservoir in range(nb_reservoirs)  :
         fcv_track[reservoir][3] = np.append(T_fcv, fcv_track[reservoir][3]) # pression H2 dans le fcv
         fcv_track[reservoir][4] = np.append(dm_dt, fcv_track[reservoir][4]) # débit H2 dans le fcv
         mdot_array = np.append(dm_dt, mdot_array)
-        rho_array = np.append(rho_fcv, rho_array)
         pin_array = np.append(p_tank, pin_array)
-        utank_array = np.append(u_tank, utank_array)
         cascade_track[stage][0] = np.append(p_tank, cascade_track[stage][0])
         cascade_track[stage][1] = np.append(m_tank, cascade_track[stage][1])
         cascade_track[stage][2] = np.append(T_tank, cascade_track[stage][2])
@@ -127,5 +126,7 @@ def m_tank_plot(tank):
 def T_tank_plot(tank):
     plt.plot(cascade_track[tank-1][2][::-1])
 # -
+
+
 
 
