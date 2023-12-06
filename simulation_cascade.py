@@ -65,7 +65,7 @@ while p_fcv<350e5:
     h_tank = cp.PropsSI('H', 'P', p_tank, 'T', T_tank, 'H2' )
     rho_m = cp.PropsSI('D', 'P', p_fcv, 'H', h_tank, 'H2') #insentalpic
     dm_dt = redvalve(p_tank, p_fcv, T_tank, 0.035, rho_m)
-    T_i =  0 + 273.15
+    T_i =  -40 + 273.15
     hin = cp.PropsSI('H', 'P', p_fcv, 'T', T_i, 'H2')
     p_tank = cp.PropsSI('P', 'U', u_tank, 'Dmass', rho_tank, 'H2')
     du_dt_fcv = dm_dt*(hin-u_fcv)/m_fcv
