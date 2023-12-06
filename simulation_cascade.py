@@ -29,7 +29,7 @@ cascade = [[300e5,50,2.435], [300e5,50,2.435], [300e5,50,2.435], [300e5,50,2.435
            [450e5,50,1.758], [450e5,50,1.758], [450e5,50,1.758], [450e5,50,1.758]]
 time_array = np.array([])
 pin_array = np.array([]) #pression in (à la sortie des tanks du cascade storage)
-cascade_track = [ [ np.array([]), np.array([]), np.array([]), np.array([]) ] ] #tracking des paramètres du cascade storage en décharge
+cascade_track = [ [ np.array([]), np.array([]), np.array([]) ] ] #tracking des paramètres du cascade storage en décharge
 fcv_track =  [ ] #tracking des paramètres des réservoirs du fcv en recharge
 
 for reservoir in range(nb_reservoirs)  :
@@ -39,7 +39,7 @@ for reservoir in range(nb_reservoirs)  :
     p_fcv = p_fcv_ini
     u_fcv = cp.PropsSI('U', 'P', p_fcv_ini, 'T', T_ini, 'H2')
     m_fcv = V_fcv*cp.PropsSI('D', 'P', p_fcv_ini, 'T', T_ini, 'H2')
-    fcv_track += [ [ t, np.array([]), np.array([]), np.array([]) ] ]
+    fcv_track += [ [ t, np.array([]), np.array([]), np.array([]), np.array([]) ] ]
     #initialisation des paramètres du tank du cascade storage system
     stage = 0
     p_tank = cascade[stage][0]
