@@ -29,7 +29,7 @@ cascade = [[300e5,50,2.435], [300e5,50,2.435], [300e5,50,2.435], [300e5,50,2.435
            [450e5,50,1.758], [450e5,50,1.758], [450e5,50,1.758], [450e5,50,1.758]]
 time_array = np.array([])
 pin_array = np.array([]) #pression in (à la sortie des tanks du cascade storage)
-cascade_track = [ [ np.array([]), np.array([]), np.array([]) ] ] #tracking des paramètres du cascade storage en décharge
+cascade_track = [ [ np.array([]), np.array([]), np.array([]), np.array([]) ] ] #tracking des paramètres du cascade storage en décharge
 fcv_track =  [ ] #tracking des paramètres des réservoirs du fcv en recharge
 
 for reservoir in range(nb_reservoirs)  :
