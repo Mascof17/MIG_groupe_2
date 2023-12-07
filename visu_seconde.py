@@ -48,27 +48,31 @@ V_bus = 0
     #on fait donc des programmes de modélisation de la recharge
 def remplissage_LP(l_m_stock, l_m_LP, t, i, debit_normo =500/3600,volume_stockage = 14.8,T = 293):
     print("lp")
-    dt =1
+    dt = 1
     debit_massique = debit_normo*cp.PropsSI('Dmass', 'T', T, 'P', 1e5,'H2')
     for k in range (len(l_m_LP)):  #on parcourt le stock LowPressure
 
         for n in range (len(l_m_stock)): #on parcourt le stock
-            pressure = cp.PropsSI('P' ,'T', T,'Dmass', l_m_stock[n]/v_in, 'H2')
                 #si on a une delta P favorable, on fait un remplissage naturel
-
-            if pressure - cp.PropsSI('P' ,'T', T,'Dmass', l_m_LP[k]/V_LP, 'H2') > 0:   
-                Dmass= (l_m_LP[k] + l_m_stock[n])/(V_LP + v_in)
-                l_m_LP[k], l_m_stock[n] = V_LP*cp.PropsSI('Dmass' ,'T', T,'P', cp.PropsSI('P' ,'T', T,'Dmass', Dmass, 'H2'), 'H2'), v_in*cp.PropsSI('Dmass' ,'T', T,'P', cp.PropsSI('P' ,'T', T,'Dmass',Dmass, 'H2'), 'H2')
-                i += 1
+            pressure = cp.PropsSI('P' ,'T', T,'Dmass', l_m_stock[n]/v_in, 'H2')
+            while pressure - cp.PropsSI('P' ,'T', T,'Dmass', l_m_LP[k]/V_LP, 'H2') > 0 and l_m_LP[k] < 50 and l_m_stock[n] > 60:   
+                dm=0.004
+                l_m_LP[k], l_m_stock[n] =  l_m_LP[k] + dm, l_m_stock[n] - dm
+    
+                # Dmass= (l_m_LP[k] + l_m_stock[n])/(V_LP + v_in) Mauvaise idée, ça remplit trop
+                # l_m_LP[k], l_m_stock[n] = V_LP*cp.PropsSI('Dmass' ,'T', T,'P', cp.PropsSI('P' ,'T', T,'Dmass', Dmass, 'H2'), 'H2'), v_in*cp.PropsSI('Dmass' ,'T', T,'P', cp.PropsSI('P' ,'T', T,'Dmass',Dmass, 'H2'), 'H2')
                 stock_tab[i], MP_tab[i], LP_tab[i] = l_m_stock, l_m_MP, l_m_LP
-
+                pressure = cp.PropsSI('P' ,'T', T,'Dmass', l_m_stock[n]/v_in, 'H2')
+            i += 1
+            if i < len(t):
+                stock_tab[i], MP_tab[i], LP_tab[i] = l_m_stock, l_m_MP, l_m_LP
                 #sinon on fait avec le compresseur
-            else:
-                while l_m_LP[k] < 50 and l_m_stock[n] > 60 : 
-                    l_m_stock[n] -= debit_massique*dt  # derivee de la masse vaut -debit, m[i+1]=m[i]-debit*dt
-                    l_m_LP[k] += debit_massique*dt
-                    i += dt
-                    stock_tab[i], MP_tab[i], LP_tab[i] = l_m_stock, l_m_MP, l_m_LP
+        for n in range (len(l_m_stock)):
+            while l_m_LP[k] < 50 and l_m_stock[n] > 60 : 
+                l_m_stock[n] -= debit_massique*dt  # derivee de la masse vaut -debit, m[i+1]=m[i]-debit*dt
+                l_m_LP[k] += debit_massique*dt
+                i += dt
+                stock_tab[i], MP_tab[i], LP_tab[i] = l_m_stock, l_m_MP, l_m_LP
     
     return l_m_stock, l_m_LP, i, stock_tab, LP_tab
 
@@ -76,18 +80,30 @@ def remplissage_LP(l_m_stock, l_m_LP, t, i, debit_normo =500/3600,volume_stockag
 
 def remplissage_MP(l_m_stock, l_m_MP, t, i, debit_normo =500/3600,volume_stockage = 14.8,T = 293):   #on définit ce débit à partir de ceux présents dans le commerce https://www.atlascopco.com/fr-fr/compressors/products/gas-compressors/h2y-high-pressure-hydrogen-compressor
     print("mp")
-    dt =1
+    dt = 1
     debit_massique = debit_normo*cp.PropsSI('Dmass', 'T', T, 'P', 1013e2,'H2') #par définition du normomètre cube
     for k in range (len(l_m_MP)):  #on parcourt le stck LP
 
         for n in range (len(l_m_stock)): #le procesus dure pendant temps secondes
-            while l_m_MP[k] < 50 and l_m_stock[n] > 60:
-                  #on se limite au pas de temps de 15min
+            pressure = cp.PropsSI('P' ,'T', T,'Dmass', l_m_stock[n]/v_in, 'H2')
+            while pressure - cp.PropsSI('P' ,'T', T,'Dmass', l_m_LP[k]/V_LP, 'H2') > 0 and l_m_LP[k] < 50 and l_m_stock[n] > 60:   
+                dm=0.004
+                l_m_MP[k], l_m_stock[n] =  l_m_MP[k] + dm, l_m_stock[n] - dm
+    
+                # Dmass= (l_m_LP[k] + l_m_stock[n])/(V_LP + v_in) Mauvaise idée, ça remplit trop
+                # l_m_LP[k], l_m_stock[n] = V_LP*cp.PropsSI('Dmass' ,'T', T,'P', cp.PropsSI('P' ,'T', T,'Dmass', Dmass, 'H2'), 'H2'), v_in*cp.PropsSI('Dmass' ,'T', T,'P', cp.PropsSI('P' ,'T', T,'Dmass',Dmass, 'H2'), 'H2')
+                stock_tab[i], MP_tab[i], LP_tab[i] = l_m_stock, l_m_MP, l_m_LP
+                pressure = cp.PropsSI('P' ,'T', T,'Dmass', l_m_stock[n]/v_in, 'H2')
+                #sinon on fait avec le compresseur
+            i += 1   #on suppose que ca prend 5 minutes
+            if i < len(t):
+                stock_tab[i], MP_tab[i], LP_tab[i] = l_m_stock, l_m_MP, l_m_LP
+        for n in range (len(l_m_stock)):
+            while l_m_MP[k] < 50 and l_m_stock[n] > 60 : 
                 l_m_stock[n] -= debit_massique*dt  # derivee de la masse vaut -debit, m[i+1]=m[i]-debit*dt
                 l_m_MP[k] += debit_massique*dt
                 i += dt
                 stock_tab[i], MP_tab[i], LP_tab[i] = l_m_stock, l_m_MP, l_m_LP
-
 
     return l_m_stock, l_m_MP, i, stock_tab, MP_tab
 
@@ -98,7 +114,7 @@ Minit_LP1 = cp.PropsSI('Dmass' ,'T', T,'P', 300e5, 'H2') * V_LP
 l_m_LP = [Minit_LP1]*4
 
 
-t=np.arange(3600*6)    #on découpe la journée en quarts d'heure
+t=np.arange(3600*6*10)    #on découpe la journée en 1eme de seconde
 stock_tab = np.empty((len(t), 3))   #tableau des données dans les stockages en f(t)
 stock_tab[0] = l_m_stock
 LP_tab = np.empty((len(t), 4)) #idem pour LP
@@ -110,14 +126,14 @@ MP_tab[0] = l_m_MP
 
 i=0
 while i < len(t)-1:
-    if i % 3600*2 == 3600*1.75:   #####toutes les 2h + 1h45
+    if i % 36000*2 == 36000*1.75:   #####toutes les 2h + 1h45
         l_m_LP, l_m_MP = [l_m_LP[i]-5 for i in range(len(l_m_LP))],  [l_m_MP[i]-3 for i in range(len(l_m_MP))] #remplissage_bus(T, l_m_LP, l_m_MP, V_bus, v_in, V_LP, V_MP, reservoirs_bus)
         i += 1
         LP_tab[i] = l_m_LP
         MP_tab[i] = l_m_MP
         stock_tab[i] = l_m_stock
     
-    elif i % 3600*3 == 0 or i == 0: #Tous les combien de temps on recharge?
+    elif i % 36000*3 == 0 or i == 0: #Tous les combien de temps on recharge?
         l_m_stock,l_m_LP, i, stock_tab, LP_tab= remplissage_LP(l_m_stock, l_m_LP, t, i)
         l_m_stock, l_m_MP, i, stock_tab, MP_tab = remplissage_MP(l_m_stock, l_m_MP, t, i)
         LP_tab[i] = l_m_LP
@@ -139,7 +155,7 @@ MP_tab[i] = l_m_MP
 stock_tab[i] = l_m_stock
 
 
-t=t/3600#on remet en heures
+t=t/36000#on remet en heures
 #Création des subplots pour visualiser la quantité
 fig, axs = plt.subplots(2, 4, figsize=(12, 6))
 
