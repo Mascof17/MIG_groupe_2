@@ -195,11 +195,15 @@ def plein_bus(nb_reservoirs, l_m_LP, l_m_MP, i, T_ambient= 25 + 273.15 ):
             
             if round(t-int(t))<0.01 :
                 i+=1
+                if i >= len(stock_tab)-1 : 
+                    return i
                 if stage in range(4) :
                     l_m_LP[stage] = m_tank
                 else :
                     l_m_MP[stage%4] = m_tank
                 LP_tab[i] = l_m_LP
+                MP_tab[i] = l_m_MP
+                stock_tab[i] = l_m_stock
             #condition de switch au tank suivant du cascade storage system
             if p_tank-p_aprr < 1e4 :
                 #condition H2 insuffisant
@@ -216,6 +220,7 @@ def plein_bus(nb_reservoirs, l_m_LP, l_m_MP, i, T_ambient= 25 + 273.15 ):
                     u_tank = cp.PropsSI('U', 'P', p_tank, 'T', T_tank, 'H2')
                     du_dt_tank = 0
         cascade[stage] = [p_tank, m_tank, cascade[stage][2]]
+    return i
 
 
 
@@ -233,20 +238,21 @@ LP_tab[0] = l_m_LP
 MP_tab = np.empty((len(t), 4)) #idem pour MP
 MP_tab[0] = l_m_MP
 
-
+3600*1.75
 
 i=0
 cycle = 0
 while i < len(t)-1:
-    if i % 3600*2 == 3600*1.75:   #####toutes les 2h + 1h45
+    if i % 3600*2 == 3600*1.2:   #####toutes les 2h + 1h45
         cycle+=1
-        plein_bus(5, l_m_LP, l_m_MP, i)
+        print('charge bus :', cycle)
+        print('i = ', i)
+        i = plein_bus(5, l_m_LP, l_m_MP, i)
         print('sortie')
-        LP_tab[i] = l_m_LP
-        MP_tab[i] = l_m_MP
-        stock_tab[i] = l_m_stock
     
-    elif i % 3600*3 == 0 or i == 0: #Tous les combien de temps on recharge?
+    #elif i % 3600*2 == 0 or i == 0: #Tous les combien de temps on recharge?
+        #cycle+=1
+        print('recharge cascade :', cycle)
         l_m_stock,l_m_LP, i, stock_tab, LP_tab= remplissage_LP(l_m_stock, l_m_LP, t, i)
         l_m_stock, l_m_MP, i, stock_tab, MP_tab = remplissage_MP(l_m_stock, l_m_MP, t, i)
         LP_tab[i] = l_m_LP
