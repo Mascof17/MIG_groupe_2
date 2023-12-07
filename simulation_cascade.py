@@ -138,3 +138,10 @@ def m_tank_plot(tank):
 
 def T_tank_plot(tank):
     plt.plot(cascade_track[tank-1][2][::-1])
+
+
+# -
+
+p_tank_plot(1)
+
+

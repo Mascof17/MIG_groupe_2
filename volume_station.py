@@ -12,3 +12,5 @@ initial_guess = 1.0
 zero = fsolve(equation, initial_guess)
 
 print("Zéro de la fonction:", zero)
+
+
