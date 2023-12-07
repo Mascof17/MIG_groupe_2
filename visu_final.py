@@ -37,13 +37,13 @@ V_bus = 0
 
 
 
-#REMPLISSAGE DES LP TANKS
+# REMPLISSAGE DES LP TANKS
 
 
 
 
 
-#étudions désormais une fonction qui suit la quantité d'hydrogène dans le LP tank 
+# étudions désormais une fonction qui suit la quantité d'hydrogène dans le LP tank 
 
     #on fait donc des programmes de modélisation de la recharge
 def remplissage_LP(l_m_stock, l_m_LP, t, i, debit_normo =500/3600,volume_stockage = 14.8,T = 293):
@@ -92,7 +92,7 @@ def remplissage_MP(l_m_stock, l_m_MP, t, i, debit_normo =500/3600,volume_stockag
     return l_m_stock, l_m_MP, i, stock_tab, MP_tab
 
 
-#####Le code de Taha
+# ####Le code de Taha
 
 
 def p_inlet(t, p_i_fcv, aprr): # calcule le pressure inlet au niveau du dispenser
@@ -259,7 +259,7 @@ while i < len(t)-1:
         LP_tab[i] = l_m_LP
         MP_tab[i] = l_m_MP
         stock_tab[i] = l_m_stock
-    
+
     
 
     
