@@ -136,12 +136,14 @@ def plein_bus(nb_reservoirs, l_m_LP, l_m_MP, i, T_ambient= 25 + 273.15 ):
     kp_valve = 0.035    ###d'où ça vient
     cascade = [ [cp.PropsSI('P','Dmass', l_m_LP[0]/2.435, 'T', T_ini, 'H2'), l_m_LP[0], 2.435] , [cp.PropsSI('P','Dmass', l_m_LP[1]/2.435, 'T', T_ini, 'H2') , l_m_LP[1],2.435] , [cp.PropsSI('P','Dmass', l_m_LP[2]/2.435, 'T', T_ini, 'H2'), l_m_LP[2],2.435] , [cp.PropsSI('P','Dmass', l_m_LP[3]/2.435, 'T', T_ini, 'H2'), l_m_LP[3],2.435],
                 [cp.PropsSI('P','Dmass', l_m_MP[0]/1.758, 'T', T_ini, 'H2'), l_m_MP[0], 1.758] , [cp.PropsSI('P','Dmass', l_m_MP[1]/1.758, 'T', T_ini, 'H2'), l_m_MP[1], 1.758] , [cp.PropsSI('P','Dmass', l_m_MP[2]/1.758, 'T', T_ini, 'H2'), l_m_MP[2], 1.758] , [cp.PropsSI('P','Dmass', l_m_MP[3]/1.758, 'T', T_ini, 'H2'), l_m_MP[3], 1.758] ]
+    print(cascade)
     time_array = np.array([])
     mdot_array = np.array([])
     pin_array = np.array([]) #pression in (à la sortie des tanks du cascade storage)
-    cascade_track = [ [ np.array([]), np.array([]), np.array([]) ] ]  #tracking des paramètres du cascade storage en décharge
+    cooling_array = np.array([]) #puissance de refroidissement du H2
+    cascade_track = [ [ np.array([]), np.array([]), np.array([]) ] ] #tracking des paramètres du cascade storage en décharge
     fcv_track =  [ ] #tracking des paramètres des réservoirs du fcv en recharge
-
+    
     for reservoir in range(nb_reservoirs)  :
         #initialisation des paramètres du réservoir du fcv
         dm_dt = 0
@@ -164,15 +166,16 @@ def plein_bus(nb_reservoirs, l_m_LP, l_m_MP, i, T_ambient= 25 + 273.15 ):
             m_fcv += dm_dt*dt
             m_tank -= dm_dt*dt
             rho_fcv = m_fcv/V_fcv
-            rho_tank = m_tank/V_LP
+            rho_tank = m_tank/cascade[stage][2]
             p_aprr = p_inlet(t-fcv_track[reservoir][0], p_fcv_ini, aprr)
             p_fcv = cp.PropsSI('P', 'U', u_fcv, 'Dmass', rho_fcv, 'H2')
-            h_tank = cp.PropsSI('H', 'P', p_tank, 'T', T_tank, 'H2')
+            h_tank = cp.PropsSI('H', 'P', p_tank, 'T', T_tank, 'H2' )
             rho_m = cp.PropsSI('D', 'P', p_fcv, 'H', h_tank, 'H2') #insentalpic
             T_i = - 30 + 273.15
             dm_dt = min(redvalve(p_aprr, p_fcv, T_i, kp_valve, rho_fcv), redvalve(p_tank, p_aprr, T_tank, kp_valve, rho_m))
             hin = cp.PropsSI('H', 'P', p_aprr, 'T', T_i, 'H2')
             p_tank = cp.PropsSI('P', 'U', u_tank, 'Dmass', rho_tank, 'H2')
+            cooling = dm_dt*(h_tank-hin)/0.9
             du_dt_fcv = dm_dt*(hin-u_fcv)/m_fcv
             du_dt_tank = dm_dt*(u_tank-h_tank)/m_tank
             T_fcv = cp.PropsSI('T', 'U', u_fcv, 'Dmass', rho_fcv, 'H2')
@@ -184,16 +187,19 @@ def plein_bus(nb_reservoirs, l_m_LP, l_m_MP, i, T_ambient= 25 + 273.15 ):
             fcv_track[reservoir][4] = np.append(dm_dt, fcv_track[reservoir][4]) # débit H2 dans le fcv
             mdot_array = np.append(dm_dt, mdot_array)
             pin_array = np.append(p_tank, pin_array)
+            cooling_array = np.append(cooling, cooling_array)
             cascade_track[stage][0] = np.append(p_tank, cascade_track[stage][0])
             cascade_track[stage][1] = np.append(m_tank, cascade_track[stage][1])
             cascade_track[stage][2] = np.append(T_tank, cascade_track[stage][2])
             t += dt
+            
             if round(t-int(t))<0.01 :
                 i+=1
                 if stage in range(4) :
                     l_m_LP[stage] = m_tank
-                if stage in range(4,8) :
+                else :
                     l_m_MP[stage%4] = m_tank
+                LP_tab[i] = l_m_LP
             #condition de switch au tank suivant du cascade storage system
             if p_tank-p_aprr < 1e4 :
                 #condition H2 insuffisant
@@ -234,8 +240,8 @@ cycle = 0
 while i < len(t)-1:
     if i % 3600*2 == 3600*1.75:   #####toutes les 2h + 1h45
         cycle+=1
-        print('Recharge numéro : ', cycle)
         plein_bus(5, l_m_LP, l_m_MP, i)
+        print('sortie')
         LP_tab[i] = l_m_LP
         MP_tab[i] = l_m_MP
         stock_tab[i] = l_m_stock
