@@ -45,8 +45,8 @@ V_bus = 0
 
 # étudions désormais une fonction qui suit la quantité d'hydrogène dans le LP tank 
 
-    #on fait donc des programmes de modélisation de la recharge
-def remplissage_LP(l_m_stock, l_m_LP, t, i, debit_normo =500/3600,volume_stockage = 14.8,T = 293):
+#on fait donc des programmes de modélisation de la recharge
+def remplissage_LP(l_m_stock, l_m_LP, t, i, debit_normo =500/3600, volume_stockage = 14.8, T = 293) :
     print("lp")
     dt = 1
     debit_massique = debit_normo*cp.PropsSI('Dmass', 'T', T, 'P', 1e5,'H2')
@@ -107,7 +107,7 @@ def remplissage_MP(l_m_stock, l_m_MP, t, i, debit_normo =500/3600,volume_stockag
 
     return l_m_stock, l_m_MP, i, stock_tab, MP_tab
 
-#####Le code de Taha
+# ####Le code de Taha
 
 
 def p_inlet(t, p_i_fcv, aprr): # calcule le pressure inlet au niveau du dispenser
@@ -127,15 +127,15 @@ def redvalve(p_i, p_o, T_in, kp, rho_o): # calcule le débit massique à partir 
 
 
 def plein_bus(nb_reservoirs, l_m_LP, l_m_MP, i, T_ambient= 25 + 273.15 ):
-    t=i
+    t=0
     dt = 0.1
     aprr = 5
     p_fcv_ini = 20e5
     T_ini = T_ambient
     V_fcv = 0.35 #350litres par réservoir 
     kp_valve = 0.035    ###d'où ça vient
-    cascade = [[cp.PropsSI('P','Dmass', l_m_LP[0]/2.435, 'T', T_ini), l_m_LP[0], 2.435], [cp.PropsSI('P','Dmass', l_m_LP[1]/2.435, 'T', T_ini), l_m_LP[1],2.435], [cp.PropsSI('P','Dmass', l_m_LP[2]/2.435, 'T', T_ini), l_m_LP[2],2.435], [cp.PropsSI('P','Dmass', l_m_LP[3]/2.435, 'T', T_ini), l_m_LP[3],2.435],
-               [450e5, l_m_MP[0],1.758], [450e5, l_m_MP[1],1.758], [450e5, l_m_MP[1],1.758], [cp.PropsSI('P','Dmass', l_m_MP[3]/2.435, 'T', T_ini), l_m_MP[3],1.758]]
+    cascade = [ [cp.PropsSI('P','Dmass', l_m_LP[0]/2.435, 'T', T_ini, 'H2'), l_m_LP[0], 2.435] , [cp.PropsSI('P','Dmass', l_m_LP[1]/2.435, 'T', T_ini, 'H2') , l_m_LP[1],2.435] , [cp.PropsSI('P','Dmass', l_m_LP[2]/2.435, 'T', T_ini, 'H2'), l_m_LP[2],2.435] , [cp.PropsSI('P','Dmass', l_m_LP[3]/2.435, 'T', T_ini, 'H2'), l_m_LP[3],2.435],
+                [cp.PropsSI('P','Dmass', l_m_MP[0]/1.758, 'T', T_ini, 'H2'), l_m_MP[0], 1.758] , [cp.PropsSI('P','Dmass', l_m_MP[1]/1.758, 'T', T_ini, 'H2'), l_m_MP[1], 1.758] , [cp.PropsSI('P','Dmass', l_m_MP[2]/1.758, 'T', T_ini, 'H2'), l_m_MP[2], 1.758] , [cp.PropsSI('P','Dmass', l_m_MP[3]/1.758, 'T', T_ini, 'H2'), l_m_MP[3], 1.758] ]
     time_array = np.array([])
     mdot_array = np.array([])
     pin_array = np.array([]) #pression in (à la sortie des tanks du cascade storage)
@@ -155,7 +155,7 @@ def plein_bus(nb_reservoirs, l_m_LP, l_m_MP, i, T_ambient= 25 + 273.15 ):
         p_tank = cascade[stage][0]
         m_tank = cascade[stage][1]
         T_tank = T_ambient
-        u_tank = cp.PropsSI('U', 'P', l_P_LP[0], 'T', T_tank, 'H2')
+        u_tank = cp.PropsSI('U', 'P', p_tank, 'T', T_tank, 'H2')
         du_dt_tank = 0
         #début recharge du réservoir
         while p_fcv<350e5:
@@ -167,7 +167,7 @@ def plein_bus(nb_reservoirs, l_m_LP, l_m_MP, i, T_ambient= 25 + 273.15 ):
             rho_tank = m_tank/V_LP
             p_aprr = p_inlet(t-fcv_track[reservoir][0], p_fcv_ini, aprr)
             p_fcv = cp.PropsSI('P', 'U', u_fcv, 'Dmass', rho_fcv, 'H2')
-            h_tank = cp.PropsSI('H', 'P', l_P_LP[0], 'T', T_tank, 'H2' )
+            h_tank = cp.PropsSI('H', 'P', p_tank, 'T', T_tank, 'H2')
             rho_m = cp.PropsSI('D', 'P', p_fcv, 'H', h_tank, 'H2') #insentalpic
             T_i = - 30 + 273.15
             dm_dt = min(redvalve(p_aprr, p_fcv, T_i, kp_valve, rho_fcv), redvalve(p_tank, p_aprr, T_tank, kp_valve, rho_m))
@@ -188,11 +188,17 @@ def plein_bus(nb_reservoirs, l_m_LP, l_m_MP, i, T_ambient= 25 + 273.15 ):
             cascade_track[stage][1] = np.append(m_tank, cascade_track[stage][1])
             cascade_track[stage][2] = np.append(T_tank, cascade_track[stage][2])
             t += dt
+            if round(t-int(t))<0.01 :
+                i+=1
+                if stage in range(4) :
+                    l_m_LP[stage] = m_tank
+                if stage in range(4,8) :
+                    l_m_MP[stage%4] = m_tank
             #condition de switch au tank suivant du cascade storage system
             if p_tank-p_aprr < 1e4 :
                 #condition H2 insuffisant
                 if stage >= len(cascade)-1 :
-                    print(f'stock épuisé au bus {(reservoir+1)//5+1}, réservoir {reservoir+1} chargé à {p_fcv/1e5} bar après {t/60} minutes')
+                    print(f'stock insuffisant pour le bus {(reservoir)//5+1}, réservoir {reservoir+1} chargé à {p_fcv/1e5} bar après {t/60} minutes')
                     break
                 else :    
                     cascade[stage] = [p_tank, m_tank, cascade[stage][2]]
@@ -224,10 +230,12 @@ MP_tab[0] = l_m_MP
 
 
 i=0
+cycle = 0
 while i < len(t)-1:
     if i % 3600*2 == 3600*1.75:   #####toutes les 2h + 1h45
-        l_m_LP, l_m_MP = [l_m_LP[i]-5 for i in range(len(l_m_LP))],  [l_m_MP[i]-3 for i in range(len(l_m_MP))] #remplissage_bus(T, l_m_LP, l_m_MP, V_bus, v_in, V_LP, V_MP, reservoirs_bus)
-        i += 1
+        cycle+=1
+        print('Recharge numéro : ', cycle)
+        plein_bus(5, l_m_LP, l_m_MP, i)
         LP_tab[i] = l_m_LP
         MP_tab[i] = l_m_MP
         stock_tab[i] = l_m_stock
@@ -245,9 +253,8 @@ while i < len(t)-1:
         MP_tab[i] = l_m_MP
         stock_tab[i] = l_m_stock
 
-    
-
-    
+if 3.00000000000091 == int(3) : 
+    print('1')
 
 LP_tab[i] = l_m_LP
 MP_tab[i] = l_m_MP
@@ -294,4 +301,6 @@ plt.tight_layout()
 
 # Afficher le graphique
 plt.show()
+
+
 

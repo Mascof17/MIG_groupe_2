@@ -71,10 +71,10 @@ for reservoir in range(nb_reservoirs)  :
         T_fcv = cp.PropsSI('T', 'U', u_fcv, 'Dmass', rho_fcv, 'H2')
         T_tank = cp.PropsSI('T', 'U', u_tank, 'Dmass', rho_tank, 'H2')
         time_array = np.append(t, time_array) 
-        fcv_track[reservoir][0] = np.append(m_fcv, fcv_track[reservoir][0]) # masse H2 dans le fcv
-        fcv_track[reservoir][1] = np.append(T_fcv, fcv_track[reservoir][1]) # température H2 dans le fcv
-        fcv_track[reservoir][2] = np.append(T_fcv, fcv_track[reservoir][2]) # pression H2 dans le fcv
-        fcv_track[reservoir][3] = np.append(dm_dt, fcv_track[reservoir][3]) # débit H2 dans le fcv
+        fcv_track[reservoir][1] = np.append(m_fcv, fcv_track[reservoir][1]) # masse H2 dans le fcv
+        fcv_track[reservoir][2] = np.append(T_fcv, fcv_track[reservoir][2]) # température H2 dans le fcv
+        fcv_track[reservoir][3] = np.append(T_fcv, fcv_track[reservoir][3]) # pression H2 dans le fcv
+        fcv_track[reservoir][4] = np.append(dm_dt, fcv_track[reservoir][4]) # débit H2 dans le fcv
         mdot_array = np.append(dm_dt, mdot_array)
         pin_array = np.append(p_tank, pin_array)
         cooling_array = np.append(cooling, cooling_array)
@@ -86,7 +86,7 @@ for reservoir in range(nb_reservoirs)  :
         if p_tank-p_aprr < 1e4 :
             #condition H2 insuffisant
             if stage >= len(cascade)-1 :
-                print(f'stock épuisé au bus {(reservoir+1)//5+1}, réservoir {reservoir+1} chargé à {p_fcv/1e5} bar après {t/60} minutes')
+                print(f'stock insuffisant pour le bus {(reservoir)//5+1}, réservoir {reservoir+1} chargé à {p_fcv/1e5} bar après {t/60} minutes')
                 break
             else :    
                 cascade[stage] = [p_tank, m_tank, cascade[stage][2]]
@@ -143,5 +143,9 @@ def T_tank_plot(tank):
 # -
 
 p_tank_plot(1)
+
+t
+
+
 
 
