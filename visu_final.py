@@ -48,27 +48,31 @@ V_bus = 0
     #on fait donc des programmes de modélisation de la recharge
 def remplissage_LP(l_m_stock, l_m_LP, t, i, debit_normo =500/3600,volume_stockage = 14.8,T = 293):
     print("lp")
-    dt =1
+    dt = 1
     debit_massique = debit_normo*cp.PropsSI('Dmass', 'T', T, 'P', 1e5,'H2')
     for k in range (len(l_m_LP)):  #on parcourt le stock LowPressure
 
         for n in range (len(l_m_stock)): #on parcourt le stock
-            pressure = cp.PropsSI('P' ,'T', T,'Dmass', l_m_stock[n]/v_in, 'H2')
                 #si on a une delta P favorable, on fait un remplissage naturel
-
-            if pressure - cp.PropsSI('P' ,'T', T,'Dmass', l_m_LP[k]/V_LP, 'H2') > 0:   
-                Dmass= (l_m_LP[k] + l_m_stock[n])/(V_LP + v_in)
-                l_m_LP[k], l_m_stock[n] = V_LP*cp.PropsSI('Dmass' ,'T', T,'P', cp.PropsSI('P' ,'T', T,'Dmass', Dmass, 'H2'), 'H2'), v_in*cp.PropsSI('Dmass' ,'T', T,'P', cp.PropsSI('P' ,'T', T,'Dmass',Dmass, 'H2'), 'H2')
-                i += 1
+            pressure = cp.PropsSI('P' ,'T', T,'Dmass', l_m_stock[n]/v_in, 'H2')
+            while pressure - cp.PropsSI('P' ,'T', T,'Dmass', l_m_LP[k]/V_LP, 'H2') > 0 and l_m_LP[k] < 50 and l_m_stock[n] > 60:   
+                dm=0.004
+                l_m_LP[k], l_m_stock[n] =  l_m_LP[k] + dm, l_m_stock[n] - dm
+    
+                # Dmass= (l_m_LP[k] + l_m_stock[n])/(V_LP + v_in) Mauvaise idée, ça remplit trop
+                # l_m_LP[k], l_m_stock[n] = V_LP*cp.PropsSI('Dmass' ,'T', T,'P', cp.PropsSI('P' ,'T', T,'Dmass', Dmass, 'H2'), 'H2'), v_in*cp.PropsSI('Dmass' ,'T', T,'P', cp.PropsSI('P' ,'T', T,'Dmass',Dmass, 'H2'), 'H2')
                 stock_tab[i], MP_tab[i], LP_tab[i] = l_m_stock, l_m_MP, l_m_LP
-
+                pressure = cp.PropsSI('P' ,'T', T,'Dmass', l_m_stock[n]/v_in, 'H2')
+            i += 1
+            if i < len(t):
+                stock_tab[i], MP_tab[i], LP_tab[i] = l_m_stock, l_m_MP, l_m_LP
                 #sinon on fait avec le compresseur
-            else:
-                while l_m_LP[k] < 50 and l_m_stock[n] > 60 : 
-                    l_m_stock[n] -= debit_massique*dt  # derivee de la masse vaut -debit, m[i+1]=m[i]-debit*dt
-                    l_m_LP[k] += debit_massique*dt
-                    i += dt
-                    stock_tab[i], MP_tab[i], LP_tab[i] = l_m_stock, l_m_MP, l_m_LP
+        for n in range (len(l_m_stock)):
+            while l_m_LP[k] < 50 and l_m_stock[n] > 60 : 
+                l_m_stock[n] -= debit_massique*dt  # derivee de la masse vaut -debit, m[i+1]=m[i]-debit*dt
+                l_m_LP[k] += debit_massique*dt
+                i += dt
+                stock_tab[i], MP_tab[i], LP_tab[i] = l_m_stock, l_m_MP, l_m_LP
     
     return l_m_stock, l_m_LP, i, stock_tab, LP_tab
 
@@ -76,23 +80,34 @@ def remplissage_LP(l_m_stock, l_m_LP, t, i, debit_normo =500/3600,volume_stockag
 
 def remplissage_MP(l_m_stock, l_m_MP, t, i, debit_normo =500/3600,volume_stockage = 14.8,T = 293):   #on définit ce débit à partir de ceux présents dans le commerce https://www.atlascopco.com/fr-fr/compressors/products/gas-compressors/h2y-high-pressure-hydrogen-compressor
     print("mp")
-    dt =1
+    dt = 1
     debit_massique = debit_normo*cp.PropsSI('Dmass', 'T', T, 'P', 1013e2,'H2') #par définition du normomètre cube
     for k in range (len(l_m_MP)):  #on parcourt le stck LP
 
         for n in range (len(l_m_stock)): #le procesus dure pendant temps secondes
-            while l_m_MP[k] < 50 and l_m_stock[n] > 60:
-                  #on se limite au pas de temps de 15min
+            pressure = cp.PropsSI('P' ,'T', T,'Dmass', l_m_stock[n]/v_in, 'H2')
+            while pressure - cp.PropsSI('P' ,'T', T,'Dmass', l_m_LP[k]/V_LP, 'H2') > 0 and l_m_LP[k] < 50 and l_m_stock[n] > 60:   
+                dm=0.004
+                l_m_MP[k], l_m_stock[n] =  l_m_MP[k] + dm, l_m_stock[n] - dm
+    
+                # Dmass= (l_m_LP[k] + l_m_stock[n])/(V_LP + v_in) Mauvaise idée, ça remplit trop
+                # l_m_LP[k], l_m_stock[n] = V_LP*cp.PropsSI('Dmass' ,'T', T,'P', cp.PropsSI('P' ,'T', T,'Dmass', Dmass, 'H2'), 'H2'), v_in*cp.PropsSI('Dmass' ,'T', T,'P', cp.PropsSI('P' ,'T', T,'Dmass',Dmass, 'H2'), 'H2')
+                stock_tab[i], MP_tab[i], LP_tab[i] = l_m_stock, l_m_MP, l_m_LP
+                pressure = cp.PropsSI('P' ,'T', T,'Dmass', l_m_stock[n]/v_in, 'H2')
+                #sinon on fait avec le compresseur
+            i += 1   #on suppose que ca prend 5 minutes
+            if i < len(t):
+                stock_tab[i], MP_tab[i], LP_tab[i] = l_m_stock, l_m_MP, l_m_LP
+        for n in range (len(l_m_stock)):
+            while l_m_MP[k] < 50 and l_m_stock[n] > 60 : 
                 l_m_stock[n] -= debit_massique*dt  # derivee de la masse vaut -debit, m[i+1]=m[i]-debit*dt
                 l_m_MP[k] += debit_massique*dt
                 i += dt
                 stock_tab[i], MP_tab[i], LP_tab[i] = l_m_stock, l_m_MP, l_m_LP
 
-
     return l_m_stock, l_m_MP, i, stock_tab, MP_tab
 
-
-# ####Le code de Taha
+#####Le code de Taha
 
 
 def p_inlet(t, p_i_fcv, aprr): # calcule le pressure inlet au niveau du dispenser
@@ -111,7 +126,7 @@ def redvalve(p_i, p_o, T_in, kp, rho_o): # calcule le débit massique à partir 
 
 
 
-def plein_bus(nb_reservoirs, l_m_LP, l_m_MP, l_m_stock, i, T_ambient= 25 + 273.15 ):
+def plein_bus(nb_reservoirs, l_m_LP, l_m_MP, i, T_ambient= 25 + 273.15 ):
     t=i
     dt = 0.1
     aprr = 5
@@ -119,8 +134,8 @@ def plein_bus(nb_reservoirs, l_m_LP, l_m_MP, l_m_stock, i, T_ambient= 25 + 273.1
     T_ini = T_ambient
     V_fcv = 0.35 #350litres par réservoir 
     kp_valve = 0.035    ###d'où ça vient
-    # cascade = [[300e5,50,2.435], [300e5,50,2.435], [300e5,50,2.435], [300e5,50,2.435],
-    #            [450e5,50,1.758], [450e5,50,1.758], [450e5,50,1.758], [450e5,50,1.758]]
+    cascade = [[cp.PropsSI('P','Dmass', l_m_LP[0]/2.435, 'T', T_ini), l_m_LP[0], 2.435], [cp.PropsSI('P','Dmass', l_m_LP[1]/2.435, 'T', T_ini), l_m_LP[1],2.435], [cp.PropsSI('P','Dmass', l_m_LP[2]/2.435, 'T', T_ini), l_m_LP[2],2.435], [cp.PropsSI('P','Dmass', l_m_LP[3]/2.435, 'T', T_ini), l_m_LP[3],2.435],
+               [450e5, l_m_MP[0],1.758], [450e5, l_m_MP[1],1.758], [450e5, l_m_MP[1],1.758], [cp.PropsSI('P','Dmass', l_m_MP[3]/2.435, 'T', T_ini), l_m_MP[3],1.758]]
     time_array = np.array([])
     mdot_array = np.array([])
     pin_array = np.array([]) #pression in (à la sortie des tanks du cascade storage)
@@ -137,8 +152,8 @@ def plein_bus(nb_reservoirs, l_m_LP, l_m_MP, l_m_stock, i, T_ambient= 25 + 273.1
         fcv_track += [ [ t, np.array([]), np.array([]), np.array([]), np.array([]) ] ]
         #initialisation des paramètres du tank du cascade storage system
         stage = 0
-        # p_tank = cascade[stage][0]
-        # m_tank = cascade[stage][1]
+        p_tank = cascade[stage][0]
+        m_tank = cascade[stage][1]
         T_tank = T_ambient
         u_tank = cp.PropsSI('U', 'P', l_P_LP[0], 'T', T_tank, 'H2')
         du_dt_tank = 0
@@ -163,10 +178,10 @@ def plein_bus(nb_reservoirs, l_m_LP, l_m_MP, l_m_stock, i, T_ambient= 25 + 273.1
             T_fcv = cp.PropsSI('T', 'U', u_fcv, 'Dmass', rho_fcv, 'H2')
             T_tank = cp.PropsSI('T', 'U', u_tank, 'Dmass', rho_tank, 'H2')
             time_array = np.append(t, time_array) 
-            fcv_track[reservoir][0] = np.append(m_fcv, fcv_track[reservoir][0]) # masse H2 dans le fcv
-            fcv_track[reservoir][1] = np.append(T_fcv, fcv_track[reservoir][1]) # température H2 dans le fcv
-            fcv_track[reservoir][2] = np.append(T_fcv, fcv_track[reservoir][2]) # pression H2 dans le fcv
-            fcv_track[reservoir][3] = np.append(dm_dt, fcv_track[reservoir][3]) # débit H2 dans le fcv
+            fcv_track[reservoir][1] = np.append(m_fcv, fcv_track[reservoir][1]) # masse H2 dans le fcv
+            fcv_track[reservoir][2] = np.append(T_fcv, fcv_track[reservoir][2]) # température H2 dans le fcv
+            fcv_track[reservoir][3] = np.append(T_fcv, fcv_track[reservoir][3]) # pression H2 dans le fcv
+            fcv_track[reservoir][4] = np.append(dm_dt, fcv_track[reservoir][4]) # débit H2 dans le fcv
             mdot_array = np.append(dm_dt, mdot_array)
             pin_array = np.append(p_tank, pin_array)
             cascade_track[stage][0] = np.append(p_tank, cascade_track[stage][0])
@@ -190,36 +205,6 @@ def plein_bus(nb_reservoirs, l_m_LP, l_m_MP, l_m_stock, i, T_ambient= 25 + 273.1
                     du_dt_tank = 0
         cascade[stage] = [p_tank, m_tank, cascade[stage][2]]
 
-#fontions pour visualiser
-def T_fcv_plot(reservoir):
-    n = len( fcv_track[reservoir-1][2] )
-    l_t=np.linspace( fcv_track[reservoir-1][0], fcv_track[reservoir][0], num = int(n) )
-    plt.plot(l_t, fcv_track[reservoir-1][2][::-1])
-
-def m_fcv_plot(reservoir):
-    n = len( fcv_track[reservoir-1][1] )
-    l_t=np.linspace( fcv_track[reservoir-1][0], fcv_track[reservoir][0], num = int(n) )
-    plt.plot(l_t, fcv_track[reservoir-1][1][::-1])
-
-def p_fcv_plot(reservoir):
-    n = len( fcv_track[reservoir-1][3] )
-    l_t=np.linspace( fcv_track[reservoir-1][0], fcv_track[reservoir][0], num = int(n) )
-    plt.plot(l_t, fcv_track[reservoir-1][3][::-1])
-
-def mdot_plot(reservoir):
-    n = len( fcv_track[reservoir-1][4] )
-    l_t=np.linspace( fcv_track[reservoir-1][0], fcv_track[reservoir][0], num = int(n) )
-    plt.plot(l_t, fcv_track[reservoir-1][4][::-1])
-
-def p_tank_plot(tank):
-    plt.plot(cascade_track[tank-1][0][::-1])
-
-def m_tank_plot(tank):
-    plt.plot(cascade_track[tank-1][1][::-1])
-
-def T_tank_plot(tank):
-    plt.plot(cascade_track[tank-1][2][::-1])
-# -
 
 
 
