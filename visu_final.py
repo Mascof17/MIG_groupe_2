@@ -48,6 +48,8 @@ V_bus = 0
 #on fait donc des programmes de modélisation de la recharge
 def remplissage_LP(l_m_stock, l_m_LP, t, i, debit_normo =500/3600, volume_stockage = 14.8, T = 293) :
     print("lp")
+    if i >= len(stock_tab)-1 : 
+                    return l_m_stock, l_m_LP, i, stock_tab, LP_tab
     dt = 1
     debit_massique = debit_normo*cp.PropsSI('Dmass', 'T', T, 'P', 1e5,'H2')
     for k in range (len(l_m_LP)):  #on parcourt le stock LowPressure
@@ -80,6 +82,8 @@ def remplissage_LP(l_m_stock, l_m_LP, t, i, debit_normo =500/3600, volume_stocka
 
 def remplissage_MP(l_m_stock, l_m_MP, t, i, debit_normo =500/3600,volume_stockage = 14.8,T = 293):   #on définit ce débit à partir de ceux présents dans le commerce https://www.atlascopco.com/fr-fr/compressors/products/gas-compressors/h2y-high-pressure-hydrogen-compressor
     print("mp")
+    if i >= len(stock_tab)-1 : 
+                    return l_m_stock, l_m_MP, i, stock_tab, MP_tab
     dt = 1
     debit_massique = debit_normo*cp.PropsSI('Dmass', 'T', T, 'P', 1013e2,'H2') #par définition du normomètre cube
     for k in range (len(l_m_MP)):  #on parcourt le stck LP
@@ -313,6 +317,8 @@ plt.tight_layout()
 
 # Afficher le graphique
 plt.show()
+
+
 
 
 
